@@ -81,6 +81,7 @@ int main() {
         cerr << "Không thấy font" << endl;
         return -1;
     }
+// tạo hình...
     RoundedRectangleShape Reset_Button(Vector2f{330.f, 100.f}, 10.f);
     Reset_Button.setFillColor(Color(255, 197, 1));
     Reset_Button.setPosition({x_BanDau, 800.f});
@@ -103,11 +104,24 @@ int main() {
     text_Continue.setPosition({x_BanDau + 450.f, 825.f});  
     text_Continue.setStyle(Text::Bold);
 
+    RoundedRectangleShape Back_Button(Vector2f{300.f, 100.f}, 15.f);
+    Back_Button.setFillColor(Color(128, 128, 128));
+    Back_Button.setPosition({120.f, 850.f});
+
+    Text text_Back(VNfont);
+    text_Back.setString(L"BACK");
+    text_Back.setCharacterSize(36);
+    text_Back.setFillColor(Color::White);
+    text_Back.setPosition({210.f, 880.f});
+    text_Back.setStyle(Text::Bold);
+    
+
     Vector2f tam(540.f, 540.f);
     float BK = 350.f;
     const float PI = 3.141592654f;
     
     vector<ManhGhep> DSTamGiac;
+// tạo ngũ + 1 tgiac màu
     for (int i = 0; i < 6; i++) {
         Vector2f p0 = tam;
         float gocBanDau = (i * 60) * PI / 180.f;
@@ -135,91 +149,162 @@ int main() {
     }
 
     int maxTG = 0;
+    int VienBiSo[100001];
     vector<int> KiemTraMau; // lưu 1->6 hình để kiểm tra màu chọn chưa
     vector<RoundedRectangleShape> MauDuocChon;
+    vector<CircleShape> VienBi;
+    int ManHinh = 1; // 1: chọn màu, 2: sắp xếp viên bi
+    bool mouseLeftDown = false;
 
+    // Vòng lặp chính
     while (window.isOpen()) {
         while (const optional<Event> event = window.pollEvent()) {
             if (event->is<Event::Closed>()) window.close();
         }
-        
+        bool leftMousePressed = Mouse::isButtonPressed(Mouse::Button::Left);
+        bool leftMouseClicked = leftMousePressed && !mouseLeftDown;
+        mouseLeftDown = leftMousePressed;
+
+        window.draw(nen);
         Vector2f mousePos = window.mapPixelToCoords(Mouse::getPosition(window));   
         
-        float dx = mousePos.x - tam.x;
-        float dy = mousePos.y - tam.y;
-        float KhoangCachChuot = sqrt(pow(dx, 2) + pow(dy, 2)); //khoảng cách chuột đến tâm 
+        if (ManHinh == 1) {
+            float dx = mousePos.x - tam.x;
+            float dy = mousePos.y - tam.y;
+            float KhoangCachChuot = sqrt(pow(dx, 2) + pow(dy, 2)); //khoảng cách chuột đến tâm 
 
-        float GocChuotRad = atan2(dy, dx);
-        if (GocChuotRad < 0) GocChuotRad += 2 * PI;
+            float GocChuotRad = atan2(dy, dx);
+            if (GocChuotRad < 0) GocChuotRad += 2 * PI;
         
-        window.draw(nen);
-        for (int i = 0; i < 6; i++) {
-            float gocBanDau = (i * 60) * PI / 180.f;
-            float gocKetThuc = ((i + 1) * 60 * PI / 180.f);
-            if (KhoangCachChuot < BK && GocChuotRad >= gocBanDau && GocChuotRad < gocKetThuc) {
-                DSTamGiac[i].scaleMongMuon = 1.1f;
-                if (Mouse::isButtonPressed(Mouse::Button::Left)) {
-                    if (maxTG < 3) {
-                        if (find(KiemTraMau.begin(), KiemTraMau.end(), i) == KiemTraMau.end()) {
-                            KiemTraMau.push_back(i);
-                            DSTamGiac[i].shape.setOutlineThickness(-3.0f);
-                            DSTamGiac[i].shape.setOutlineColor(Color::White);
+            window.draw(nen);
+            for (int i = 0; i < 6; i++) {
+                float gocBanDau = (i * 60) * PI / 180.f;
+                float gocKetThuc = ((i + 1) * 60 * PI / 180.f);
+                if (KhoangCachChuot < BK && GocChuotRad >= gocBanDau && GocChuotRad < gocKetThuc) {
+                    DSTamGiac[i].scaleMongMuon = 1.1f;
+                    if (Mouse::isButtonPressed(Mouse::Button::Left)) {
+                        if (maxTG < 3) {
+                            if (find(KiemTraMau.begin(), KiemTraMau.end(), i) == KiemTraMau.end()) {
+                                KiemTraMau.push_back(i);
+                                DSTamGiac[i].shape.setOutlineThickness(-3.0f);
+                                DSTamGiac[i].shape.setOutlineColor(Color::White);
 
-                            RoundedRectangleShape newShape(Vector2f{Size_Color}, 20.f);
-                            newShape.setFillColor(mauTamGiac[i]);
-                            if (maxTG < 3) 
-                                newShape.setPosition({x_BanDau + maxTG * 250, y_BanDau});
-                            else 
-                                newShape.setPosition({x_BanDau - 750.f + maxTG * 250, y_BanDau + 270.f});
-                            MauDuocChon.push_back(newShape);
-                            maxTG++;
-                            cout << "đã chọn được màu";
+                                RoundedRectangleShape newShape(Vector2f{Size_Color}, 20.f);
+                                newShape.setFillColor(mauTamGiac[i]);
+                                if (maxTG < 3) 
+                                    newShape.setPosition({x_BanDau + maxTG * 250, y_BanDau});
+                                else 
+                                    newShape.setPosition({x_BanDau - 750.f + maxTG * 250, y_BanDau + 270.f});
+                                MauDuocChon.push_back(newShape);
+                                maxTG++;
+                                cout << "đã chọn được màu";
+                            }
                         }
                     }
-                }
-                
-            } else {
+                } else {
                 DSTamGiac[i].scaleMongMuon = 1.0f;
-            }
-            
-            DSTamGiac[i].scaleHienTai += (DSTamGiac[i].scaleMongMuon - DSTamGiac[i].scaleHienTai) * 0.15f;
-            DSTamGiac[i].shape.setScale(Vector2f(DSTamGiac[i].scaleHienTai, DSTamGiac[i].scaleHienTai));
-
-            window.draw(DSTamGiac[i].shape);
-        }
-        
-        if (Continue_Button.getGlobalBounds().contains(mousePos)) {
-            Continue_Button.setOutlineThickness(3.f);
-            Continue_Button.setOutlineColor(Color::White);
-            if (Mouse::isButtonPressed(Mouse::Button::Left)) {
-                // Xử lí
-            }
-        } else {
-            Continue_Button.setOutlineThickness(0.f);
-        }
-
-        if (Reset_Button.getGlobalBounds().contains(mousePos)) {
-            Reset_Button.setOutlineThickness(3.f);
-            Reset_Button.setOutlineColor(Color::White);
-            if (Mouse::isButtonPressed(Mouse::Button::Left)) {
-                while (!KiemTraMau.empty()) KiemTraMau.pop_back();
-                while (!MauDuocChon.empty()) MauDuocChon.pop_back();
-                maxTG = 0;
-                for (int i = 0; i < 6; i++) {
-                    DSTamGiac[i].shape.setOutlineThickness(0.f);
                 }
+            
+                DSTamGiac[i].scaleHienTai += (DSTamGiac[i].scaleMongMuon - DSTamGiac[i].scaleHienTai) * 0.15f;
+                DSTamGiac[i].shape.setScale(Vector2f(DSTamGiac[i].scaleHienTai, DSTamGiac[i].scaleHienTai));
+
+                window.draw(DSTamGiac[i].shape);
             }
-        } else {
-            Reset_Button.setOutlineThickness(0.f);
+
+            if (Continue_Button.getGlobalBounds().contains(mousePos)) {
+                Continue_Button.setOutlineThickness(3.f);
+                Continue_Button.setOutlineColor(Color::White);
+                if (Mouse::isButtonPressed(Mouse::Button::Left)) 
+                    if (maxTG >= 2) ManHinh = 2; 
+                    else cout << "Vui long chon tren 2 mau";
+            } else {
+                Continue_Button.setOutlineThickness(0.f);
+            }
+
+            if (Reset_Button.getGlobalBounds().contains(mousePos)) {
+                Reset_Button.setOutlineThickness(3.f);
+                Reset_Button.setOutlineColor(Color::White);
+                if (Mouse::isButtonPressed(Mouse::Button::Left)) {
+// xóa màu
+                    {
+                    while (!KiemTraMau.empty()) KiemTraMau.pop_back();
+                    while (!MauDuocChon.empty()) MauDuocChon.pop_back();
+                    maxTG = 0;
+                    for (int i = 0; i < 6; i++) {
+                        DSTamGiac[i].shape.setOutlineThickness(0.f);
+                    }
+                    }   
+                }
+            } else {
+                Reset_Button.setOutlineThickness(0.f);
+            }
+
+            window.draw(Continue_Button);
+            window.draw(Reset_Button);
+            window.draw(text_Reset);
+            window.draw(text_Continue);
+            for (const auto& shape : MauDuocChon) {
+                window.draw(shape);
+            }
+        } else if (ManHinh == 2) {
+            // thay đổi là thuộc tính MauDuocChon
+            window.draw(nen);
+            float x_Sau = 120.f;
+            float y_Sau = 170.f;
+            int i = 0;
+            for (auto& shape : MauDuocChon) {
+                shape.setPosition({x_Sau + i * 250.f, y_Sau});
+                shape.setScale({1.0f, 0.7f});
+                window.draw(shape);
+                i++;
+            }
+
+            if (Back_Button.getGlobalBounds().contains(mousePos)) {
+                Back_Button.setOutlineThickness(3.f);
+                Back_Button.setOutlineColor(Color::White);
+                if (Mouse::isButtonPressed(Mouse::Button::Left)) {
+                    ManHinh = 1;
+// xóa màu
+                    {
+                    while (!KiemTraMau.empty()) KiemTraMau.pop_back();
+                    while (!MauDuocChon.empty()) MauDuocChon.pop_back();
+                    maxTG = 0;
+                    for (int i = 0; i < 6; i++) {
+                        DSTamGiac[i].shape.setOutlineThickness(0.f);
+                    }
+                    }
+                }
+            } else {
+                Back_Button.setOutlineThickness(0.f);
+            }
+
+            float x_Bi = 100.f;
+            float y_Bi = 500.f;
+            i = 0;
+            for (auto& shape : MauDuocChon) {
+                if (shape.getGlobalBounds().contains(mousePos)) {
+                    shape.setOutlineThickness(3.f);
+                    shape.setOutlineColor(Color :: White);
+                    if (Mouse::isButtonPressed(Mouse::Button::Left)) {
+                        CircleShape newVienBi(60.f);
+                        newVienBi.setFillColor(shape.getFillColor());
+                        newVienBi.setPosition({x_Bi + i * 100.f, y_Bi});
+                        VienBi.push_back(newVienBi);
+                        i++;
+                    }
+                } else 
+                    shape.setOutlineThickness(0.f);
+            }
+
+            for (auto& Bi : VienBi) {
+                window.draw(Bi);
+            }
+
+            window.draw(Back_Button);
+            window.draw(text_Back);
+            // Xử lí sắp xếp viên bi
         }
 
-        window.draw(Continue_Button);
-        window.draw(Reset_Button);
-        window.draw(text_Reset);
-        window.draw(text_Continue);
-        for (const auto& shape : MauDuocChon) {
-            window.draw(shape);
-        }
         window.display();
     }
     
