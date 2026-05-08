@@ -3,7 +3,7 @@
 #include<cmath>
 #include<vector>
 #include<algorithm>
-#include <utility>
+#include<utility>
 
 using namespace std;
 using namespace sf;
@@ -78,6 +78,7 @@ void XuLyClick(vector<CircleShape>& VienBi, int VienBiDangChon, Vector2f VTriBan
 
 void ThemBi(const optional<Event>& event, const RenderWindow& window, vector<CircleShape>& VienBi, vector<CircleShape>& DSachVienBi);
 
+
 int main() 
 {
     RenderWindow window(VideoMode({x_Screen, y_Screen}), "Sap xep vien bi", Style::Default, State::Windowed);
@@ -108,6 +109,7 @@ int main()
     Text text1(VNfont); 
     Text text2(VNfont); 
     taotext(VNfont, text_ResetColor, text_Stop, text_Start, text1, text2); 
+
 
     vector<CircleShape> DSachVienBi;
     bool isDragging = false; 
@@ -141,6 +143,7 @@ int main()
         window.draw(text_Start);
         window.draw(text1);
         window.draw(text2);
+        
         for (auto bi : vienbi1) 
         {
             window.draw(bi);
@@ -149,6 +152,8 @@ int main()
         {
             window.draw(bi);
         }
+        for (auto bi : DSachVienBi)
+            window.draw(bi);
         window.display();
     }
     
@@ -214,7 +219,7 @@ void taolucgiac()
 
 // Hàm xử lý hoán đổi vị trí cố định
 
-void taotext(Font& VNfont, Text& text_ResetColor, Text& text_Stop, Text& text_Start, Text& text1, Text& text2) 
+void taotext(Font& VNfont, Text& text_ResetColor, Text& text_Stop, Text& text_Start, Text& text1, Text& text2)
 {
     // 1. CHỮ NÚT ĐẶT LẠI MÀU (Nút X: 710, Y: 490)
     
@@ -225,7 +230,6 @@ void taotext(Font& VNfont, Text& text_ResetColor, Text& text_Stop, Text& text_St
     text_ResetColor.setPosition({840.f, 510.f});  
 
     // 2. CHỮ NÚT DỪNG LẠI (Nút X: 1325, Y: 390)
-    
     text_Stop.setString(L"Dừng lại");
     text_Stop.setCharacterSize(40);
     text_Stop.setFillColor(Color::White);
@@ -233,7 +237,6 @@ void taotext(Font& VNfont, Text& text_ResetColor, Text& text_Stop, Text& text_St
     text_Stop.setPosition({1485.f, 410.f});  
 
     // 3. CHỮ NÚT BẮT ĐẦU SẮP XẾP (Nút X: 1325, Y: 490)
-   
     text_Start.setString(L"Bắt đầu sắp xếp");
     text_Start.setCharacterSize(40);
     text_Start.setFillColor(Color::White);
@@ -453,4 +456,49 @@ void ThemBi(const optional<Event>& event, const RenderWindow& window, vector<Cir
     Vector2f mousePos = window.mapPixelToCoords(Mouse::getPosition(window));
     XuLiHover(VienBi, mousePos); 
     
+    if (const auto* mouseButtonPressed = event->getIf<Event::MouseButtonPressed>()) // Ktra nhấn giữ chuột
+    {
+        if (mouseButtonPressed->button == Mouse::Button::Left)
+        {
+            for (int i = 0; i < VienBi.size(); i++)
+            {
+                Vector2f TamBi = VienBi[i].getPosition();
+                float KCach = sqrt(pow(mousePos.x - TamBi.x, 2) + pow(mousePos.y - TamBi.y, 2));
+                if (KCach <= 75.f)
+                {
+                    CircleShape bi(70.f);
+                    bi.setOrigin({70.f, 70.f});
+                    bi.setFillColor(VienBi[i].getFillColor());
+                    bi.setOutlineThickness(0.f);
+                    bi.setOutlineColor(Color::White);
+                    DSachVienBi.push_back(bi);
+
+                    float X_Center = x_Screen / 2.f;
+                    float Y_BanDau = 830.f;
+                    float X_KCach = 160.f;
+                    int N = DSachVienBi.size();
+                    //tìm tọa độ x
+                    //CThuc: Tâm màn hình - (Tổng chiều dài của cả dãy / 2)
+                    float X_BanDau = X_Center - ((N - 1) * X_KCach / 2);
+                    float Max_Width = x_Screen - 150.f;
+                    float DSVB_Width = ((N - 1) * X_KCach) + (75.f * 2); // chiều dài DSachVienBi
+                    float Scale = 1.0f;
+                    if (DSVB_Width > Max_Width)
+                    {
+                        Scale = Max_Width / DSVB_Width;
+                        X_KCach *= Scale;
+                        X_BanDau = X_Center - ((N - 1) * X_KCach) / 2.0f;
+                    }
+                    
+                    for (int j = 0; j < N; j++)
+                    {
+                        DSachVienBi[j].setPosition({X_BanDau + j * X_KCach, Y_BanDau});
+                        DSachVienBi[j].setScale({Scale, Scale});
+                    }
+                    break;
+                }
+            }
+        }
+    }
 }
+
