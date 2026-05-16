@@ -187,7 +187,8 @@ int main()
         window.draw(text_ClearBi);
         window.draw(text1);
         window.draw(text2);
-        ve_luc_giac_to(window, {380.f, 320.f}, 22.f, 6, false);
+        bool clickBangMau = false;
+        
 
         while (const optional<Event> event = window.pollEvent()) 
         {
@@ -203,21 +204,19 @@ int main()
                 }
             }
             
-            //xử lí các nút bấm và màu
+            //xử lí màu
+            if (event->is<Event::MouseButtonPressed>())
+            {
+                if (event->getIf<Event::MouseButtonPressed>()->button == Mouse::Button::Left)
+                    clickBangMau = true;
+            }
+
+            //xử lí các nút bấm và hover nút
             if (const auto* mouseButtonPressed = event->getIf<Event::MouseButtonPressed>()) 
             {
                 Vector2f mousePos = window.mapPixelToCoords(mouseButtonPressed->position);
                 if (mouseButtonPressed->button == Mouse::Button::Left) 
                 {
-                    // Chọn màu ban đầu
-                    bool clickBangMau = true;
-                    Color mauChon = ve_luc_giac_to(window, {380.f, 320.f}, 22.f, 6, clickBangMau);
-                    clickBangMau = false; // reset lại sau khi lấy màu
-                    if (mauChon.a != 0)
-                    {
-                        tao3vienbi(vienbi1, vienbi2, mauChon, indexMau);
-                    }
-
                     // Kiểm tra nếu click vào nút Start
                     if (Start.getGlobalBounds().contains(mousePos)) 
                     {
@@ -247,6 +246,7 @@ int main()
                         ViTriSwap.clear();
                     }
 
+                    // Kiểm tra nếu click vào nút ResetColor
                     if (ResetColor.getGlobalBounds().contains(mousePos))
                     {
                         VienBi123.clear();
@@ -255,8 +255,7 @@ int main()
                         vienbi2.clear();
                         indexMau = 0;
                     }
-
-                    // Kiểm tra nếu click vào nút ResetColor
+                    
                 }
             }
 
@@ -276,7 +275,9 @@ int main()
             }
             
         }
-
+        Color mauChon = ve_luc_giac_to(window, {380.f, 320.f}, 22.f, 6, clickBangMau);
+        if (mauChon.a != 0)
+            tao3vienbi(vienbi1, vienbi2, mauChon, indexMau);
 
         for (auto bi : vienbi1) 
             window.draw(bi);
@@ -290,9 +291,6 @@ int main()
         // ------------------------------------------------
 
         // (Các vòng lặp for vẽ vienbi1, vienbi2, DSachVienBi của bạn nằm ở dưới đây...)
-    
-
-
         for (int i = 0; i < DSachVienBi.size(); i++)
         {
             // Kiểm tra: Nếu viên bi này đang được chọn (có viền -10)
@@ -338,8 +336,7 @@ int main()
 void taotext(Font& VNfont, Text& text_ResetColor, Text& text_Stop, Text& text_ClearBi, Text& text_Start, Text& text1, Text& text2)
 {
     // 1. CHỮ NÚT ĐẶT LẠI MÀU (Nút X: 710, Y: 490)
-    
-    text_ResetColor.setString(L"Đặt lại màu");
+    text_ResetColor.setString(L"Đặt lại tất cả");
     text_ResetColor.setCharacterSize(40);
     text_ResetColor.setFillColor(Color::Black); // Đã sửa thành màu đen để nổi trên nền trắng
     text_ResetColor.setStyle(Text::Bold);
@@ -765,21 +762,29 @@ bool XoaBi(const optional<Event>& event, const RenderWindow& window, vector<Circ
 
 void SapXepVienBi(vector<int>& VienBi123, vector<pair<int, int>>& ViTriSwap) 
 {
-    // Hàm này sẽ chứa thuật toán sắp xếp viên bi, được gọi khi nhấn nút "Bắt đầu sắp xếp"
-    // Thuật toán có thể là Bubble Sort, Selection Sort, hoặc bất kỳ thuật toán nào bạn muốn
-    // Trong quá trình sắp xếp, bạn có thể thêm hiệu ứng đổi màu hoặc di chuyển viên bi để trực quan hơn
-    for (int i = 0; i < VienBi123.size() - 1; i++)
-    {
-        for (int j = i + 1; j < VienBi123.size(); j++)
-        {
-            if (VienBi123[i] > VienBi123[j])
-            {
-                // Swap trong mảng số thứ tự
-                swap(VienBi123[i], VienBi123[j]);
-                // Swap trong mảng hình ảnh
-                // Lưu lại vị trí swap để sau này có thể tạo hiệu ứng di chuyển nếu muốn
-                ViTriSwap.push_back({i, j});
+    ViTriSwap.clear();
+    if (VienBi123.size() <= 1) return;
+
+    // Thuật toán Cờ Hà Lan chạy thẳng trên mảng logic
+    int low = 0, mid = 0, high = VienBi123.size() - 1;
+    
+    while (mid <= high) {
+        if (VienBi123[mid] == 0) {
+            if (low != mid) {
+                swap(VienBi123[low], VienBi123[mid]);
+                ViTriSwap.push_back({low, mid});
             }
+            low++; mid++;
+        } 
+        else if (VienBi123[mid] == 1) {
+            mid++;
+        } 
+        else if (VienBi123[mid] == 2) {
+            if (mid != high) {
+                swap(VienBi123[mid], VienBi123[high]);
+                ViTriSwap.push_back({mid, high});
+            }
+            high--;
         }
     }
 }
