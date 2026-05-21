@@ -8,8 +8,8 @@
 using namespace std;
 using namespace sf;
 
-float x_Screen = 1920.f;
-float y_Screen = 1080.f;
+unsigned int x_Screen = 1920;
+unsigned int y_Screen = 1080;
 
 struct HCN_Bo_Goc : public sf::Shape {
 public:
@@ -67,7 +67,7 @@ void taobutton(HCN_Bo_Goc& Start, HCN_Bo_Goc& Stop, HCN_Bo_Goc& ClearBi, HCN_Bo_
 
 void taohinh(RectangleShape& nen, HCN_Bo_Goc& nen1, HCN_Bo_Goc& nen2, HCN_Bo_Goc& nen3);
 
-void tao3vienbi(vector<CircleShape>& vienbi1, vector<CircleShape>& vienbi2, Color mau, int& indexMau);
+void doimau(vector<CircleShape>& vienbi1, vector<CircleShape>& vienbi2, Color mau, int& indexMau);
 
 void XuLiHover(vector<CircleShape>& VienBi, Vector2f mousePos);
 
@@ -109,6 +109,21 @@ int main()
 
     //tạo bi
     vector<CircleShape> vienbi1, vienbi2;
+    float X_BanDau = 780.f; 
+    float Y_BanDau = 185.f;
+    float khoangCachX = 170.f;
+    for (int i = 0; i < 3; i++)
+    {
+        CircleShape bi(75.f);
+        bi.setOrigin({75.f, 75.f}); 
+        bi.setFillColor(Color::White);
+        bi.setPosition({X_BanDau + i * khoangCachX, Y_BanDau});
+        bi.setOutlineColor(Color::White);
+        vienbi1.push_back(bi);
+        bi.setPosition({(X_BanDau + 620.f) + i * khoangCachX, Y_BanDau});
+        vienbi2.push_back(bi);
+    }
+    
     //tạo button
     HCN_Bo_Goc Start, Stop, ClearBi, ResetColor;
     taobutton(Start, Stop, ClearBi, ResetColor);
@@ -125,6 +140,7 @@ int main()
     Text text_Start(VNfont); 
     Text text1(VNfont); 
     Text text2(VNfont); 
+    
     taotext(VNfont, text_ResetColor, text_Stop, text_ClearBi, text_Start, text1, text2); 
     Text text_X(VNfont);
     text_X.setString("X");
@@ -194,6 +210,8 @@ int main()
         {
             if (event->is<Event::Closed>()) window.close();
             XuLyKeoTha(event, window, vienbi1, VienBi123, isDragging, indexBiDangKeo, offset, viTriBanDauKhiKeo, 1);
+
+
             ThemBi(event, window, vienbi2, DSachVienBi, VienBi123, hienThongBao, dongHoThongBao);
             // Kiểm tra nếu thả chuột trái sau khi kéo bi 1, thì đồng bộ bi 2 theo:
             if (const auto* mouseButtonReleased = event->getIf<Event::MouseButtonReleased>()) 
@@ -203,13 +221,6 @@ int main()
                     dongboVienBi(vienbi1, vienbi2, DSachVienBi, VienBi123);
                 }
             }
-            
-            //xử lí màu
-            if (event->is<Event::MouseButtonPressed>())
-            {
-                if (event->getIf<Event::MouseButtonPressed>()->button == Mouse::Button::Left)
-                    clickBangMau = true;
-            }
 
             //xử lí các nút bấm và hover nút
             if (const auto* mouseButtonPressed = event->getIf<Event::MouseButtonPressed>()) 
@@ -217,6 +228,8 @@ int main()
                 Vector2f mousePos = window.mapPixelToCoords(mouseButtonPressed->position);
                 if (mouseButtonPressed->button == Mouse::Button::Left) 
                 {
+                    clickBangMau = true;
+
                     // Kiểm tra nếu click vào nút Start
                     if (Start.getGlobalBounds().contains(mousePos)) 
                     {
@@ -271,13 +284,17 @@ int main()
                 XuLyHoverButton(Start, mousePos);
                 XuLyHoverButton(ClearBi, mousePos); 
                 XuLyHoverButton(ResetColor, mousePos);
-
+                XuLiHover(vienbi1, mousePos);
+                XuLiHover(vienbi2, mousePos);
             }
             
         }
-        Color mauChon = ve_luc_giac_to(window, {380.f, 320.f}, 22.f, 6, clickBangMau);
+        Color mauChon = ve_luc_giac_to(window, {380.f, 320.f}, 14.f, 10, clickBangMau);
         if (mauChon.a != 0)
-            tao3vienbi(vienbi1, vienbi2, mauChon, indexMau);
+        {
+            doimau(vienbi1, vienbi2, mauChon, indexMau);
+        }
+            
 
         for (auto bi : vienbi1) 
             window.draw(bi);
@@ -324,8 +341,11 @@ int main()
                 hienThongBao = false;
             }
         }
-        
-        window.display();
+    
+    Text tCount(VNfont, "Danh sach bi: " + to_string(DSachVienBi.size()) + " / " + to_string(20), 35);
+    tCount.setPosition({70, 630});
+    window.draw(tCount);
+    window.display();
     }
     
     return 0;
@@ -418,20 +438,11 @@ void taohinh(RectangleShape& nen, HCN_Bo_Goc& nen1, HCN_Bo_Goc& nen2, HCN_Bo_Goc
     nen3.setPosition({50.f, y_Screen / 2 + 70.f});
 };
  
-void tao3vienbi(vector<CircleShape>& vienbi1, vector<CircleShape>& vienbi2, Color mau, int& indexMau) 
+void doimau(vector<CircleShape>& vienbi1, vector<CircleShape>& vienbi2, Color mau, int& indexMau) 
 {
     if (indexMau >= 3) return; // Chỉ tạo tối đa 3 viên bi mỗi lần gọi hàm
-    float X_BanDau = 780.f; 
-    float Y_BanDau = 185.f;
-    float khoangCachX = 170.f;
-    CircleShape bi(75.f);
-    bi.setOrigin({75.f, 75.f}); 
-    bi.setFillColor(mau);
-    bi.setPosition({X_BanDau + indexMau * khoangCachX, Y_BanDau});
-    bi.setOutlineColor(Color::White);
-    vienbi1.push_back(bi);
-    bi.setPosition({(X_BanDau + 620.f) + indexMau * khoangCachX, Y_BanDau});
-    vienbi2.push_back(bi);
+    vienbi1[indexMau].setFillColor(mau);
+    vienbi2[indexMau].setFillColor(mau);
     indexMau++;
 }
 
@@ -508,8 +519,8 @@ void XuLyKeoTha(const optional<Event>& event, const RenderWindow& window, vector
             float Check_KCach = sqrt(pow(TamBiDangChon.x - VTriBanDau.x, 2) + pow(TamBiDangChon.y - VTriBanDau.y, 2));
             if (Check_KCach < 5.f)
             {
-                XuLyClick(VienBi1, VienBiDangChon, VTriBanDau, 0);
-                
+                //XuLyClick(VienBi1, VienBiDangChon, VTriBanDau, 0);
+                //return true;
             }
             for (int i = 0; i < VienBi1.size(); i++) 
             {
@@ -556,8 +567,6 @@ void XuLyKeoTha(const optional<Event>& event, const RenderWindow& window, vector
         if (KTra && VienBiDangChon != -1) 
         {
             VienBi1[VienBiDangChon].setPosition(mousePos + offset);
-
-                //XuLyClick(VienBi1, VienBiDangChon, VTriBanDau, 0);
         }
         else
             XuLiHover(VienBi1, mousePos);
@@ -668,19 +677,7 @@ void ThemBi(const optional<Event>& event, const RenderWindow& window, vector<Cir
 void dongboVienBi(vector<CircleShape>& vienbi1, vector<CircleShape>& vienbi2, vector<CircleShape>& DSachVienBi, vector<int>& VienBi123)
 {
     // Đảm bảo 2 mảng có số lượng bi bằng nhau để không bị lỗi văng game
-    if (vienbi1.size() != vienbi2.size()) return;
-
-    for (int i = 0; i < vienbi1.size(); i++)
-    {
-        // 1. Đồng bộ màu: Viết thêm dòng này để lỡ bi 1 đổi màu thì bi 2 cũng đổi theo
-        vienbi2[i].setFillColor(vienbi1[i].getFillColor());
-
-        // 2. Đồng bộ vị trí: Lấy tọa độ của bi 1
-        Vector2f viTriBi1 = vienbi1[i].getPosition();
-
-        // Ép bi 2 đi theo bi 1, cộng thêm 620 pixel trục X để nó nằm ở bên phải
-        vienbi2[i].setPosition({viTriBi1.x + 620.f, viTriBi1.y});
-    }   
+    
     // 2. Chốt kiểm tra an toàn: Nếu khay dưới chưa có bi thì thoát
     if (DSachVienBi.empty() || VienBi123.empty() || DSachVienBi.size() != VienBi123.size()) return;
 
@@ -780,7 +777,7 @@ void SapXepVienBi(vector<int>& VienBi123, vector<pair<int, int>>& ViTriSwap)
             mid++;
         } 
         else if (VienBi123[mid] == 2) {
-            if (mid != high) {
+            if (mid != high && VienBi123[high] != 2) {
                 swap(VienBi123[mid], VienBi123[high]);
                 ViTriSwap.push_back({mid, high});
             }
@@ -789,7 +786,7 @@ void SapXepVienBi(vector<int>& VienBi123, vector<pair<int, int>>& ViTriSwap)
     }
 }
 
-void ChayAnimationGapKhuc(bool& dangChayAnimation, int& indexHanhDong, int& frameAnimation, const int MAX_FRAME, 
+void ChayAnimationGapKhuc(bool& dangChayAnimation, int& indexHanhDong, int& frameAnimation, const int MAX_FRAME,
                           vector<CircleShape>& DSachVienBi, vector<pair<int, int>>& ViTriSwap, 
                           int& vt1, int& vt2, Vector2f& posStart1, Vector2f& posStart2)
 {
